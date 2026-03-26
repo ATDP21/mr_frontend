@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getStockGuitarras } from "../services/guitarra.service";
 import { Guitarra } from "../types/guitarra";
 
 const StockGuitarrasPage: React.FC = () => {
     const [guitarras, setGuitarras] = useState<Guitarra[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string>("");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     useEffect(() => {
         getStockGuitarras()
-            .then((data) => setGuitarras(data))
+            .then(setGuitarras)
             .catch((err: Error) => setError(err.message))
             .finally(() => setLoading(false));
     }, []);
@@ -18,8 +19,11 @@ const StockGuitarrasPage: React.FC = () => {
     if (error) return <p>Error: {error}</p>;
 
     return (
-        <div style={{ padding: "20px" }}>
-            <h1>Stock de Guitarras</h1>
+        <div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px" }}>
+                <h1>Stock de Guitarras</h1>
+                <Link to="/guitarras/crear">Crear guitarra</Link>
+            </div>
 
             {guitarras.length === 0 ? (
                 <p>No hay datos</p>

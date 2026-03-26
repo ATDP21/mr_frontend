@@ -1,7 +1,16 @@
-import StockGuitarrasPage from "./modules/guitarras/pages/StockGuitarrasPage";
+import React from "react";
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./contexts/auth/AuthContext";
+import AppRoutes from "./routes/AppRoutes";
 
 function App() {
-  return <StockGuitarrasPage />;
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  );
 }
 
 export default App;
