@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../../contexts/auth/AuthContext";
 import { crearGuitarra } from "../services/guitarra.service";
 import { CrearGuitarraRequest } from "../types/crearGuitarra";
 
 const CrearGuitarraPage: React.FC = () => {
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     const [form, setForm] = useState<CrearGuitarraRequest>({
@@ -47,7 +49,6 @@ const CrearGuitarraPage: React.FC = () => {
                 tipo: "",
             });
 
-            navigate("/guitarras/stock");
         } catch (err) {
             const message = err instanceof Error ? err.message : "Error desconocido";
             setError(message);
@@ -56,8 +57,23 @@ const CrearGuitarraPage: React.FC = () => {
         }
     };
 
+    const handleLogout = async () => {
+        await logout();
+        navigate("/login", { replace: true });
+    };
+
     return (
         <div>
+            <div style={{ marginBottom: "16px" }}>
+                <p>
+                    Usuario: <strong>{user?.nomusuario ?? "-"}</strong>
+                </p>
+                <p>
+                    Email: <strong>{user?.email ?? "-"}</strong>
+                </p>
+                <button onClick={handleLogout}>Cerrar sesion</button>
+            </div>
+
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px" }}>
                 <h1>Crear guitarra</h1>
                 <Link to="/guitarras/stock">Volver al stock</Link>

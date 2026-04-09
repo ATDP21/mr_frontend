@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../../contexts/auth/AuthContext";
 import { getStockGuitarras } from "../services/guitarra.service";
 import { Guitarra } from "../types/guitarra";
 
 const StockGuitarrasPage: React.FC = () => {
+    const { user, logout, isAuthenticated } = useAuth();
+    const navigate = useNavigate();
+    const isAdmin = user?.rol === "ADMIN";
+
     const [guitarras, setGuitarras] = useState<Guitarra[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -15,14 +20,43 @@ const StockGuitarrasPage: React.FC = () => {
             .finally(() => setLoading(false));
     }, []);
 
+    const handleLogout = async () => {
+        await logout();
+        navigate("/guitarras/stock", { replace: true });
+    };
+
     if (loading) return <p>Cargando...</p>;
     if (error) return <p>Error: {error}</p>;
 
     return (
         <div>
+            <div style={{ marginBottom: "16px" }}>
+                {isAuthenticated ? (
+                    <>
+                        <p>
+                            Usuario: <strong>{user?.nomusuario ?? "-"}</strong>
+                        </p>
+                        <p>
+                            Email: <strong>{user?.email ?? "-"}</strong>
+                        </p>
+                        <p>
+                            Rol: <strong>{user?.rol ?? "CLIENTE"}</strong>
+                        </p>
+                        <div style={{ display: "flex", gap: "12px", marginBottom: "8px" }}>
+                            <Link to="/mi-cuenta">Mi cuenta</Link>
+                            {isAdmin ? <Link to="/admin/panel">Panel admin</Link> : null}
+                            {user?.rol === "CLIENTE" ? <Link to="/cliente/area">Area cliente</Link> : null}
+                        </div>
+                        <button onClick={handleLogout}>Cerrar sesion</button>
+                    </>
+                ) : (
+                    <button onClick={() => navigate("/login")}>Iniciar sesion</button>
+                )}
+            </div>
+
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px" }}>
                 <h1>Stock de Guitarras</h1>
-                <Link to="/guitarras/crear">Crear guitarra</Link>
+                {isAdmin ? <Link to="/guitarra/crear">Crear guitarra</Link> : null}
             </div>
 
             {guitarras.length === 0 ? (

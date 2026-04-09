@@ -1,24 +1,88 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { useAuth } from "../contexts/auth/AuthContext";
+import { UserRole } from "../modules/auth/types/auth";
 
 import StockGuitarrasPage from "../modules/guitarras/pages/StockGuitarrasPage";
 import CrearGuitarraPage from "../modules/guitarras/pages/CrearGuitarraPage";
 import LoginPage from "../modules/auth/pages/LoginPage";
+import OAuth2Redirect from "../modules/auth/pages/OAuth2Redirect";
 
-// Si tienes otras páginas, las irás añadiendo aquí
-// import HomePage from "../pages/HomePage";
-// import NotFoundPage from "../pages/NotFoundPage";
+const AuthenticatedRoute = () => {
+    const { isAuthenticated, isLoading } = useAuth();
+
+    if (isLoading) {
+        return <p>Cargando sesion...</p>;
+    }
+
+    if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
+    }
+
+    return <Outlet />;
+};
+
+const RoleRoute = ({ allowedRoles }: { allowedRoles: UserRole[] }) => {
+    const { user, isLoading } = useAuth();
+
+    if (isLoading) {
+        return <p>Cargando sesion...</p>;
+    }
+
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+
+    const userRole = user.rol ?? "CLIENTE";
+    if (!allowedRoles.includes(userRole)) {
+        return <Navigate to="/guitarra/stock" replace />;
+    }
+
+    return <Outlet />;
+};
+
+const PublicOnlyRoute = () => {
+    const { isAuthenticated, isLoading } = useAuth();
+
+    if (isLoading) {
+        return <p>Cargando sesion...</p>;
+    }
+
+    if (isAuthenticated) {
+        return <Navigate to="/guitarra/stock" replace />;
+    }
+
+    return <Outlet />;
+};
 
 const AppRoutes = () => {
     return (
         <Routes>
-            <Route path="/" element={<Navigate to="/guitarras/stock" replace />} />
+            <Route path="/" element={<Navigate to="/guitarra/stock" replace />} />
 
-            <Route path="/guitarras/stock" element={<StockGuitarrasPage />} />
-            <Route path="/guitarras/crear" element={<CrearGuitarraPage />} />
-            <Route path="/login" element={<LoginPage/>} />
-            {/* Ejemplos futuros */}
-            {/* <Route path="/home" element={<HomePage />} /> */}
-            {/* <Route path="*" element={<NotFoundPage />} /> */}
+            <Route path="/guitarra/stock" element={<StockGuitarrasPage />} />
+
+            <Route element={<PublicOnlyRoute />}>
+                <Route path="/login" element={<LoginPage />} />
+            </Route>
+
+            <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
+
+            <Route element={<AuthenticatedRoute />}>
+                <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
+                    <Route path="/guitarra/crear" element={<CrearGuitarraPage />} />
+                    <Route path="/admin/panel" element={<p>Panel de administracion</p>} />
+                </Route>
+
+                <Route element={<RoleRoute allowedRoles={["CLIENTE"]} />}>
+                    <Route path="/cliente/area" element={<p>Area de cliente</p>} />
+                </Route>
+
+                <Route element={<RoleRoute allowedRoles={["CLIENTE", "ADMIN"]} />}>
+                    <Route path="/mi-cuenta" element={<p>Mi cuenta</p>} />
+                </Route>
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );
 };

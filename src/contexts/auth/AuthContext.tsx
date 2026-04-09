@@ -1,40 +1,71 @@
-import React, { createContext, useContext, useState } from "react";
-import { login as loginService } from "../../modules/auth/services/auth.service";
-import { LoginRequest } from "../../modules/auth/types/auth";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+    getLoggedUser,
+    login as loginService,
+    logout as logoutService,
+} from "../../modules/auth/services/auth.service";
+import { LoggedUser, LoginRequest } from "../../modules/auth/types/auth";
 
 type AuthContextType = {
-    token: string | null;
+    user: LoggedUser | null;
     login: (data: LoginRequest) => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
+    refreshSession: () => Promise<void>;
     isAuthenticated: boolean;
+    isLoading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [token, setToken] = useState<string | null>(null);
+    const [user, setUser] = useState<LoggedUser | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const login = async (data: LoginRequest) => {
-        const response = await loginService(data);
-        setToken(response.token);
-    };
+    const refreshSession = useCallback(async () => {
+        try {
+            const loggedUser = await getLoggedUser();
+            setUser(loggedUser);
+        } catch {
+            setUser(null);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
 
-    const logout = () => {
-        setToken(null);
-    };
+    useEffect(() => {
+        void refreshSession();
+    }, [refreshSession]);
 
-    return (
-        <AuthContext.Provider
-            value={{
-                token,
-                login,
-                logout,
-                isAuthenticated: Boolean(token),
-            }}
-        >
-            {children}
-        </AuthContext.Provider>
+    const login = useCallback(
+        async (data: LoginRequest) => {
+            await loginService(data);
+            setIsLoading(true);
+            await refreshSession();
+        },
+        [refreshSession]
     );
+
+    const logout = useCallback(async () => {
+        try {
+            await logoutService();
+        } finally {
+            setUser(null);
+        }
+    }, []);
+
+    const value = useMemo(
+        () => ({
+            user,
+            login,
+            logout,
+            refreshSession,
+            isAuthenticated: Boolean(user),
+            isLoading,
+        }),
+        [user, login, logout, refreshSession, isLoading]
+    );
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

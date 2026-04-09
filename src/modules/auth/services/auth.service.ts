@@ -1,5 +1,12 @@
 import { config } from "../../../config/enviroment";
-import { AuthResponse, LoginRequest } from "../types/auth";
+import {
+    AuthResponse,
+    LoggedUser,
+    LoginRequest,
+    UsuarioSecureDTO,
+    UserRole,
+} from "../types/auth";
+import { getXsrfTokenFromCookie } from "../../../utils/api";
 
 export async function login(request: LoginRequest): Promise<AuthResponse> {
     const response = await fetch(`${config.url.API_BASE_URL}/auth/login`, {
@@ -7,12 +14,91 @@ export async function login(request: LoginRequest): Promise<AuthResponse> {
         headers: {
             "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(request),
     });
 
+    const data = (await response.json().catch(() => ({}))) as AuthResponse;
+
     if (!response.ok) {
-        throw new Error("Login incorrecto");
+        throw new Error(data.message || "Login incorrecto");
     }
 
-    return response.json();
+    return data;
+}
+
+function parseEsAdmin(value: unknown): boolean {
+    if (typeof value === "boolean") {
+        return value;
+    }
+
+    if (typeof value === "string") {
+        return value.toLowerCase() === "true";
+    }
+
+    if (typeof value === "number") {
+        return value === 1;
+    }
+
+    return false;
+}
+
+function normalizeRoleFromEsAdmin(esAdmin: unknown): UserRole {
+    return parseEsAdmin(esAdmin) ? "ADMIN" : "CLIENTE";
+}
+
+function mapUsuarioSecureDTO(data: unknown): LoggedUser {
+    if (!data || typeof data !== "object") {
+        throw new Error("Respuesta de sesión inválida");
+    }
+
+    const dto = data as Partial<UsuarioSecureDTO>;
+
+    if (typeof dto.nomusuario !== "string" || typeof dto.email !== "string") {
+        throw new Error("Respuesta de sesión incompleta");
+    }
+
+    return {
+        nomusuario: dto.nomusuario,
+        email: dto.email,
+        nombreCompleto:
+            typeof dto.nombreCompleto === "string" && dto.nombreCompleto.trim().length > 0
+                ? dto.nombreCompleto
+                : dto.nomusuario,
+        rol: normalizeRoleFromEsAdmin(dto.esAdmin),
+    };
+}
+
+export async function getLoggedUser(): Promise<LoggedUser | null> {
+    const response = await fetch(`${config.url.API_BASE_URL}/usuario/loggeado`, {
+        method: "GET",
+        credentials: "include",
+    });
+
+    if (response.status === 401 || response.status === 403) {
+        return null;
+    }
+
+    if (!response.ok) {
+        throw new Error("No se pudo recuperar la sesión");
+    }
+
+    const data = (await response.json().catch(() => null)) as unknown;
+    return mapUsuarioSecureDTO(data);
+}
+
+export async function logout(): Promise<void> {
+    const xsrf = getXsrfTokenFromCookie();
+    const headers: Record<string, string> = {};
+    if (xsrf) headers["X-XSRF-TOKEN"] = xsrf;
+
+    const response = await fetch(`${config.url.API_BASE_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+        headers,
+    });
+
+    if (!response.ok) {
+        throw new Error("No se pudo cerrar sesión");
+    }
 }

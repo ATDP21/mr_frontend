@@ -4,6 +4,22 @@ export interface LoginRequest {
 }
 
 export interface AuthResponse {
-    token: string;
+    token?: string;
     message?: string;
+}
+
+export type UserRole = "ADMIN" | "CLIENTE";
+
+export interface UsuarioSecureDTO {
+    nomusuario: string;
+    email: string;
+    nombreCompleto: string;
+    esAdmin: boolean;
+}
+
+export interface LoggedUser {
+    nomusuario: string;
+    email: string;
+    nombreCompleto: string;
+    rol: UserRole;
 }
