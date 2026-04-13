@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/auth/AuthContext";
 import OAuthButton from "../../../components/OAuthButton";
 
@@ -17,7 +17,7 @@ export default function LoginPage() {
 
         try {
             await login({ email, password });
-            navigate("/guitarras/stock", { replace: true });
+            navigate("/guitarra/stock", { replace: true });
         } catch {
             setError("Credenciales invalidas");
         }
@@ -42,6 +42,10 @@ export default function LoginPage() {
                 {isLoading ? "Entrando..." : "Entrar"}
             </button>
             {error && <p>{error}</p>}
+
+            <p style={{ marginTop: 12 }}>
+                ¿No tienes cuenta? <Link to="/registro">Regístrate</Link>
+            </p>
 
             <div style={{ marginTop: 12 }}>
                 <p>O inicia sesión con:</p>

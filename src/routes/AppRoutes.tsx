@@ -5,6 +5,7 @@ import { UserRole } from "../modules/auth/types/auth";
 import StockGuitarrasPage from "../modules/guitarras/pages/StockGuitarrasPage";
 import CrearGuitarraPage from "../modules/guitarras/pages/CrearGuitarraPage";
 import LoginPage from "../modules/auth/pages/LoginPage";
+import RegisterPage from "../modules/auth/pages/RegisterPage";
 import OAuth2Redirect from "../modules/auth/pages/OAuth2Redirect";
 
 const AuthenticatedRoute = () => {
@@ -63,6 +64,7 @@ const AppRoutes = () => {
 
             <Route element={<PublicOnlyRoute />}>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/registro" element={<RegisterPage />} />
             </Route>
 
             <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />

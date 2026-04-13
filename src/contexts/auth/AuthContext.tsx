@@ -3,12 +3,14 @@ import {
     getLoggedUser,
     login as loginService,
     logout as logoutService,
+    register as registerService,
 } from "../../modules/auth/services/auth.service";
-import { LoggedUser, LoginRequest } from "../../modules/auth/types/auth";
+import { LoggedUser, LoginRequest, RegisterRequest } from "../../modules/auth/types/auth";
 
 type AuthContextType = {
     user: LoggedUser | null;
     login: (data: LoginRequest) => Promise<void>;
+    register: (data: RegisterRequest) => Promise<void>;
     logout: () => Promise<void>;
     refreshSession: () => Promise<void>;
     isAuthenticated: boolean;
@@ -45,6 +47,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         [refreshSession]
     );
 
+    const register = useCallback(
+        async (data: RegisterRequest) => {
+            await registerService(data);
+
+            // Auto-login tras registro.
+            await loginService({ email: data.email, password: data.password });
+            setIsLoading(true);
+            await refreshSession();
+        },
+        [refreshSession]
+    );
+
     const logout = useCallback(async () => {
         try {
             await logoutService();
@@ -57,12 +71,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         () => ({
             user,
             login,
+            register,
             logout,
             refreshSession,
             isAuthenticated: Boolean(user),
             isLoading,
         }),
-        [user, login, logout, refreshSession, isLoading]
+        [user, login, register, logout, refreshSession, isLoading]
     );
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -23,3 +23,14 @@ export interface LoggedUser {
     nombreCompleto: string;
     rol: UserRole;
 }
+
+export interface RegisterRequest {
+    nombreUsuario: string;
+    email: string;
+    password: string;
+    nombreCompleto?: string;
+}
+
+export interface RegisterResponse {
+    message?: string;
+}
