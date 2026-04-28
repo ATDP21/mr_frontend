@@ -43,14 +43,18 @@ export default function LoginPage() {
             </button>
             {error && <p>{error}</p>}
 
-            <p style={{ marginTop: 12 }}>
+            <p style={{marginTop: 12}}>
                 ¿No tienes cuenta? <Link to="/registro">Regístrate</Link>
             </p>
 
-            <div style={{ marginTop: 12 }}>
+            <div style={{marginTop: 12}}>
                 <p>O inicia sesión con:</p>
-                <OAuthButton />
+                <OAuthButton/>
             </div>
+
+            <p style={{marginTop: 12}}>
+                <Link to="/guitarra/stock">Continuar sin iniciar sesión</Link>
+            </p>
         </form>
     );
 }

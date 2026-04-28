@@ -1,16 +1,31 @@
 import { config } from "../../../config/enviroment";
 import { Guitarra } from "../types/guitarra";
 import { CrearGuitarraRequest } from "../types/crearGuitarra";
-import { apiFetch } from "../../../utils/api";
+import { apiFetch, apiFetchJson } from "../../../utils/api";
 
 export const getStockGuitarras = async (): Promise<Guitarra[]> => {
-    const response = await fetch(`${config.url.API_BASE_URL}/guitarra/verStock`);
+    return apiFetchJson<Guitarra[]>(`${config.url.API_BASE_URL}/guitarra/verStock`, {
+        method: "GET",
+        headers: {
+            Accept: "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+        },
+    });
+};
 
-    if (!response.ok) {
-        throw new Error("Error en la petición");
-    }
+export const getGuitarraByNumserie = async (numserie: string): Promise<Guitarra | null> => {
+    const value = encodeURIComponent(numserie);
+    const data = await apiFetchJson<Guitarra | null>(`${config.url.API_BASE_URL}/guitarra/ver/${value}`, {
+        method: "GET",
+        headers: {
+            Accept: "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+        },
+    });
 
-    return response.json();
+    // Si el backend devuelve 200 con cuerpo vacío/null.
+    if (!data) return null;
+    return data;
 };
 
 export const crearGuitarra = async (

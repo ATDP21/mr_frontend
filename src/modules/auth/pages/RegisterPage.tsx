@@ -106,8 +106,11 @@ export default function RegisterPage() {
 
             {error && <p>{error}</p>}
 
-            <p style={{ marginTop: 12 }}>
+            <p style={{marginTop: 12}}>
                 ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
+            </p>
+            <p style={{marginTop: 12}}>
+                <Link to="/guitarra/stock">Continuar sin registrar</Link>
             </p>
         </form>
     );
