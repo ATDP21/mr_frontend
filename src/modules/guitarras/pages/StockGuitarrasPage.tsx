@@ -68,7 +68,7 @@ const StockGuitarrasPage: React.FC = () => {
                                     : "—"}
                             </td>
                             <td>
-                                <button onClick={() => addItem(g.numserie, 1)}>Añadir</button>
+                                <button onClick={() => addItem(g.id, 1)}>Añadir</button>
                             </td>
                         </tr>
                     ))}

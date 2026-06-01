@@ -74,7 +74,7 @@ const DetalleGuitarraPage: React.FC = () => {
 
             <div style={{ marginTop: 16 }}>
                 <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
-                    <button onClick={() => addItem(guitarra.numserie, 1)}>Añadir al carrito</button>
+                    <button onClick={() => addItem(guitarra?.id, 1)}>Añadir al carrito</button>
                     <Link to="/carrito">Ir al carrito</Link>
                 </div>
 

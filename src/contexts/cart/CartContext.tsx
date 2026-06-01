@@ -1,16 +1,17 @@
+// `src/contexts/cart/CartContext.tsx`
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 export type CartItem = {
-    numserie: string;
+    productId: number;
     quantity: number;
 };
 
 export type CartContextValue = {
     items: CartItem[];
     totalItems: number;
-    addItem: (numserie: string, quantity?: number) => void;
-    removeItem: (numserie: string) => void;
-    setQuantity: (numserie: string, quantity: number) => void;
+    addItem: (productId: number, quantity?: number) => void;
+    removeItem: (productId: number) => void;
+    setQuantity: (productId: number, quantity: number) => void;
     clear: () => void;
 };
 
@@ -18,8 +19,12 @@ const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 const STORAGE_KEY = "mr_cart_v1";
 
-function normalizeNumserie(value: string) {
-    return value.trim();
+function normalizeProductId(value: number) {
+    const id = Number(value);
+    if (!Number.isFinite(id)) return null;
+    const int = Math.floor(id);
+    if (int <= 0) return null;
+    return int;
 }
 
 function loadInitialCart(): CartItem[] {
@@ -30,9 +35,12 @@ function loadInitialCart(): CartItem[] {
         if (!Array.isArray(parsed)) return [];
 
         return parsed
-            .filter((x: any) => x && typeof x.numserie === "string" && typeof x.quantity === "number")
-            .map((x: any) => ({ numserie: normalizeNumserie(x.numserie), quantity: Math.max(1, Math.floor(x.quantity)) }))
-            .filter((x: CartItem) => x.numserie.length > 0);
+            .filter((x: any) => x && typeof x.productId === "number" && typeof x.quantity === "number")
+            .map((x: any) => ({
+                productId: Math.max(1, Math.floor(x.productId)),
+                quantity: Math.max(1, Math.floor(x.quantity)),
+            }))
+            .filter((x: CartItem) => Number.isFinite(x.productId) && x.productId > 0);
     } catch {
         return [];
     }
@@ -49,27 +57,29 @@ export const CartProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         }
     }, [items]);
 
-    const addItem = (numserie: string, quantity: number = 1) => {
-        const key = normalizeNumserie(numserie);
-        if (!key) return;
+    const addItem = (productId: number, quantity: number = 1) => {
+        const key = normalizeProductId(productId);
+        if (key === null) return;
         const qty = Math.max(1, Math.floor(quantity));
 
         setItems((prev) => {
-            const existing = prev.find((p) => p.numserie === key);
-            if (!existing) return [...prev, { numserie: key, quantity: qty }];
-            return prev.map((p) => (p.numserie === key ? { ...p, quantity: p.quantity + qty } : p));
+            const existing = prev.find((p) => p.productId === key);
+            if (!existing) return [...prev, { productId: key, quantity: qty }];
+            return prev.map((p) => (p.productId === key ? { ...p, quantity: p.quantity + qty } : p));
         });
     };
 
-    const removeItem = (numserie: string) => {
-        const key = normalizeNumserie(numserie);
-        setItems((prev) => prev.filter((p) => p.numserie !== key));
+    const removeItem = (productId: number) => {
+        const key = normalizeProductId(productId);
+        if (key === null) return;
+        setItems((prev) => prev.filter((p) => p.productId !== key));
     };
 
-    const setQuantity = (numserie: string, quantity: number) => {
-        const key = normalizeNumserie(numserie);
+    const setQuantity = (productId: number, quantity: number) => {
+        const key = normalizeProductId(productId);
+        if (key === null) return;
         const qty = Math.max(1, Math.floor(quantity));
-        setItems((prev) => prev.map((p) => (p.numserie === key ? { ...p, quantity: qty } : p)));
+        setItems((prev) => prev.map((p) => (p.productId === key ? { ...p, quantity: qty } : p)));
     };
 
     const clear = () => setItems([]);
@@ -93,4 +103,3 @@ export function useCart() {
     if (!ctx) throw new Error("useCart debe usarse dentro de CartProvider");
     return ctx;
 }
-
