@@ -7,6 +7,7 @@ import type { Guitarra } from "../modules/guitarras/types/guitarra";
 import { apiFetch } from "../utils/api";
 import { config } from "../config/enviroment";
 import { useAuth } from "../contexts/auth/AuthContext";
+import { getMisDirecciones, DireccionDTO, crearDireccion, DireccionCrearDTO, editarDireccion, eliminarDireccion } from '../modules/direcciones/address.service';
 
 type CartLine = {
     idProducto: number;
@@ -78,18 +79,165 @@ const CarritoPage: React.FC = () => {
 
     const { user } = useAuth();
     const [creating, setCreating] = useState(false);
-    const [direccionEntregaId, setDireccionEntregaId] = useState<number>(1);
-    const [direccionFacturacionId, setDireccionFacturacionId] = useState<number>(2);
+    const [direcciones, setDirecciones] = useState<DireccionDTO[]>([]);
+    const [loadingDirs, setLoadingDirs] = useState(false);
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [creatingDir, setCreatingDir] = useState(false);
+    const [newDir, setNewDir] = useState<DireccionCrearDTO>({
+        nombreDestinatario: '',
+        direccionCalle: '',
+        codigoPostal: '',
+        ciudad: '',
+        provincia: '',
+        pais: '',
+        telefono: '',
+        documentoId: '',
+        tipoDireccion: 'PEDIDO'
+    });
+    const [selectedDelivery, setSelectedDelivery] = useState<number | null>(null);
+    const [selectedBilling, setSelectedBilling] = useState<number | null>(null);
+    const [expandedDelivery, setExpandedDelivery] = useState<Set<number>>(new Set());
+    const [expandedBilling, setExpandedBilling] = useState<Set<number>>(new Set());
+    const [showAddressSelector, setShowAddressSelector] = useState(false);
+    const [editingDirId, setEditingDirId] = useState<number | null>(null);
+    const [editDirData, setEditDirData] = useState<DireccionCrearDTO>({
+        nombreDestinatario: '',
+        direccionCalle: '',
+        codigoPostal: '',
+        ciudad: '',
+        provincia: '',
+        pais: '',
+        telefono: '',
+        documentoId: '',
+        tipoDireccion: 'PEDIDO'
+    });
+    const [editingDirLoading, setEditingDirLoading] = useState(false);
+
+    useEffect(() => { void (async () => {
+        setLoadingDirs(true);
+        try {
+            const d = await getMisDirecciones();
+            setDirecciones(d);
+        } catch (err) {
+            console.error('Error cargando direcciones', err);
+        } finally {
+            setLoadingDirs(false);
+        }
+    })(); }, []);
+
+    // listas derivadas para mostrar mensajes si no existen direcciones
+    const deliveryDirs = direcciones.filter(d => d.tipoDireccion === 'PEDIDO' || d.tipoDireccion === 'AMBAS');
+    const billingDirs = direcciones.filter(d => d.tipoDireccion === 'FACTURACION' || d.tipoDireccion === 'AMBAS');
+
+    const handleCreateDireccion = async () => {
+        try {
+            setCreatingDir(true);
+            const created = await crearDireccion(newDir);
+            setDirecciones(prev => [created, ...prev]);
+            setShowAddForm(false);
+            // reset
+            setNewDir({
+                nombreDestinatario: '',
+                direccionCalle: '',
+                codigoPostal: '',
+                ciudad: '',
+                provincia: '',
+                pais: '',
+                telefono: '',
+                documentoId: '',
+                tipoDireccion: 'PEDIDO'
+            });
+        } catch (e: any) {
+            console.error('Error crear dirección', e);
+            alert(e?.message || 'Error creando dirección');
+        } finally {
+            setCreatingDir(false);
+        }
+    };
+
+    const handleStartEditDireccion = (dir: DireccionDTO) => {
+        setEditingDirId(dir.id);
+        setEditDirData({
+            nombreDestinatario: dir.nombreDestinatario,
+            direccionCalle: dir.direccionCalle,
+            codigoPostal: dir.codigoPostal,
+            ciudad: dir.ciudad,
+            provincia: dir.provincia,
+            pais: dir.pais,
+            telefono: dir.telefono,
+            documentoId: dir.documentoId,
+            tipoDireccion: dir.tipoDireccion
+        });
+    };
+
+    const handleSaveEditDireccion = async () => {
+        if (!editingDirId) return;
+        try {
+            setEditingDirLoading(true);
+            const updated = await editarDireccion(editingDirId, editDirData);
+            setDirecciones(prev => prev.map(d => d.id === editingDirId ? updated : d));
+            setEditingDirId(null);
+        } catch (e: any) {
+            console.error('Error editar dirección', e);
+            alert(e?.message || 'Error editando dirección');
+        } finally {
+            setEditingDirLoading(false);
+        }
+    };
+
+    const handleDeleteDireccion = async (id: number) => {
+        if (!window.confirm('¿Estás seguro de que quieres eliminar esta dirección?')) {
+            return;
+        }
+        try {
+            await eliminarDireccion(id);
+            setDirecciones(prev => prev.filter(d => d.id !== id));
+            // Limpiar selecciones si era la seleccionada
+            if (selectedDelivery === id) setSelectedDelivery(null);
+            if (selectedBilling === id) setSelectedBilling(null);
+        } catch (e: any) {
+            console.error('Error eliminar dirección', e);
+            alert(e?.message || 'Error eliminando dirección');
+        }
+    };
+
+    const getAddressValidationError = (): string | null => {
+        const delId = selectedDelivery;
+        const billId = selectedBilling;
+        const delDir = delId ? direcciones.find(d => d.id === delId) : null;
+        const billDir = billId ? direcciones.find(d => d.id === billId) : null;
+
+        if (!delId && !billId) {
+            return 'Selecciona dirección de entrega y facturación';
+        }
+        if (!delId && billId && billDir?.tipoDireccion !== 'AMBAS') {
+            return 'Selecciona dirección de entrega';
+        }
+        if (delId && !billId && delDir?.tipoDireccion !== 'AMBAS') {
+            return 'Selecciona dirección de facturación';
+        }
+        return null;
+    };
 
     const handleProceedToCheckout = async () => {
         if (items.length === 0) return;
+        const validationError = getAddressValidationError();
+        if (validationError) {
+            setShowAddressSelector(true);
+            return;
+        }
         try {
             setCreating(true);
 
+            // Si no hay entrega seleccionada, usar facturación si es AMBAS
+            const delId = selectedDelivery ?? (selectedBilling && direcciones.find(d => d.id === selectedBilling)?.tipoDireccion === 'AMBAS' ? selectedBilling : null);
+            // Si no hay facturación seleccionada, usar entrega si es AMBAS
+            const billId = selectedBilling ?? (selectedDelivery && direcciones.find(d => d.id === selectedDelivery)?.tipoDireccion === 'AMBAS' ? selectedDelivery : null);
+
             const payload = {
                 cartItems: items.map(it => ({ guitarraid: it.productId, cantidad: it.quantity })),
-                direccionEntregaId: direccionEntregaId,
-                direccionFacturacionId: direccionFacturacionId,
+                direccionEntregaId: delId || 0,
+                direccionFacturacionId: billId || 0,
                 email: user?.email ?? '',
                 nombreCliente: user?.nombreCompleto ?? user?.nomusuario ?? 'Cliente'
             };
@@ -199,26 +347,217 @@ const CarritoPage: React.FC = () => {
                             <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 8 }}>
                                 El total se recalculará en el checkout con precios/stock actuales.
                             </div>
-                            <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                                <label style={{ fontSize: 12 }}>Dir. entrega:</label>
-                                <input type="number" min={1} value={direccionEntregaId} onChange={e => setDireccionEntregaId(Number(e.target.value || 1))} style={{ width: 80 }} />
-                                <label style={{ fontSize: 12 }}>Dir. facturación:</label>
-                                <input type="number" min={1} value={direccionFacturacionId} onChange={e => setDireccionFacturacionId(Number(e.target.value || 2))} style={{ width: 80 }} />
-                            </div>
                             <button
                                 onClick={handleProceedToCheckout}
                                 disabled={creating || items.length === 0}
                                 style={{
-                                    backgroundColor: creating ? '#999' : '#007bff',
+                                    backgroundColor: creating || items.length === 0 ? '#999' : '#007bff',
                                     color: 'white',
                                     padding: '8px 12px',
                                     border: 'none',
                                     borderRadius: 4,
-                                    cursor: creating ? 'not-allowed' : 'pointer'
+                                    cursor: creating || items.length === 0 ? 'not-allowed' : 'pointer'
                                 }}
                             >
                                 {creating ? 'Creando sesión...' : 'Proceder al pago'}
                             </button>
+                            {showAddressSelector && (
+                                <div style={{ marginTop: 16, border: '1px solid #ddd', padding: 12, borderRadius: 4 }}>
+                                    <div style={{ marginBottom: 12 }}>
+                                        <button onClick={() => setShowAddForm(s => !s)} style={{ marginBottom: 8 }}>{showAddForm ? 'Cancelar' : 'Añadir dirección'}</button>
+                                    </div>
+                                    {showAddForm && (
+                                        <div style={{ border: '1px solid #ddd', padding: 8, marginBottom: 12 }}>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                                <input placeholder="Nombre destinatario" value={newDir.nombreDestinatario} onChange={e=>setNewDir({...newDir, nombreDestinatario: e.target.value})} />
+                                                <input placeholder="Teléfono" value={newDir.telefono} onChange={e=>setNewDir({...newDir, telefono: e.target.value})} />
+                                                <input placeholder="Calle" value={newDir.direccionCalle} onChange={e=>setNewDir({...newDir, direccionCalle: e.target.value})} />
+                                                <input placeholder="Documento ID" value={newDir.documentoId} onChange={e=>setNewDir({...newDir, documentoId: e.target.value})} />
+                                                <input placeholder="Código postal" value={newDir.codigoPostal} onChange={e=>setNewDir({...newDir, codigoPostal: e.target.value})} />
+                                                <input placeholder="Ciudad" value={newDir.ciudad} onChange={e=>setNewDir({...newDir, ciudad: e.target.value})} />
+                                                <input placeholder="Provincia" value={newDir.provincia} onChange={e=>setNewDir({...newDir, provincia: e.target.value})} />
+                                                <input placeholder="País" value={newDir.pais} onChange={e=>setNewDir({...newDir, pais: e.target.value})} />
+                                                <div style={{ gridColumn: '1 / -1' }}>
+                                                    <label>Tipo:&nbsp;</label>
+                                                    <select value={newDir.tipoDireccion} onChange={e=>setNewDir({...newDir, tipoDireccion: e.target.value as any})}>
+                                                        <option value="PEDIDO">PEDIDO</option>
+                                                        <option value="FACTURACION">FACTURACION</option>
+                                                        <option value="AMBAS">AMBAS</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                                                <button onClick={handleCreateDireccion} disabled={creatingDir}>{creatingDir ? 'Creando...' : 'Crear'}</button>
+                                                <button onClick={()=>setShowAddForm(false)} disabled={creatingDir}>Cancelar</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <label style={{ fontSize: 14, fontWeight: 600 }}>Dirección de entrega</label>
+                                            {loadingDirs ? <div>Cargando direcciones...</div> : (
+                                                <div>
+                                                    {deliveryDirs.length === 0 ? (
+                                                        <div style={{ marginTop: 8, fontSize: 13, color: '#486bf1' }}>No tienes ninguna dirección de entrega. Crea una dirección de tipo PEDIDO o AMBAS.</div>
+                                                    ) : (
+                                                        deliveryDirs.map(d => {
+                                                            const isExp = expandedDelivery.has(d.id);
+                                                            const isEditing = editingDirId === d.id;
+                                                            return (
+                                                                <div key={`del-${d.id}`} style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px solid #eee' }}>
+                                                                    {isEditing ? (
+                                                                        <div style={{ border: '1px solid #ddd', padding: 8, marginBottom: 8 }}>
+                                                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                                                                <input placeholder="Nombre destinatario" value={editDirData.nombreDestinatario} onChange={e=>setEditDirData({...editDirData, nombreDestinatario: e.target.value})} />
+                                                                                <input placeholder="Teléfono" value={editDirData.telefono} onChange={e=>setEditDirData({...editDirData, telefono: e.target.value})} />
+                                                                                <input placeholder="Calle" value={editDirData.direccionCalle} onChange={e=>setEditDirData({...editDirData, direccionCalle: e.target.value})} />
+                                                                                <input placeholder="Documento ID" value={editDirData.documentoId} onChange={e=>setEditDirData({...editDirData, documentoId: e.target.value})} />
+                                                                                <input placeholder="Código postal" value={editDirData.codigoPostal} onChange={e=>setEditDirData({...editDirData, codigoPostal: e.target.value})} />
+                                                                                <input placeholder="Ciudad" value={editDirData.ciudad} onChange={e=>setEditDirData({...editDirData, ciudad: e.target.value})} />
+                                                                                <input placeholder="Provincia" value={editDirData.provincia} onChange={e=>setEditDirData({...editDirData, provincia: e.target.value})} />
+                                                                                <input placeholder="País" value={editDirData.pais} onChange={e=>setEditDirData({...editDirData, pais: e.target.value})} />
+                                                                                <div style={{ gridColumn: '1 / -1' }}>
+                                                                                    <label>Tipo:&nbsp;</label>
+                                                                                    <select value={editDirData.tipoDireccion} onChange={e=>setEditDirData({...editDirData, tipoDireccion: e.target.value as any})}>
+                                                                                        <option value="PEDIDO">PEDIDO</option>
+                                                                                        <option value="FACTURACION">FACTURACION</option>
+                                                                                        <option value="AMBAS">AMBAS</option>
+                                                                                    </select>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                                                                                <button onClick={handleSaveEditDireccion} disabled={editingDirLoading}>{editingDirLoading ? 'Guardando...' : 'Guardar'}</button>
+                                                                                <button onClick={() => setEditingDirId(null)} disabled={editingDirLoading}>Cancelar</button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <>
+                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        const s = new Set(expandedDelivery);
+                                                                                        if (s.has(d.id)) s.delete(d.id);
+                                                                                        else s.add(d.id);
+                                                                                        setExpandedDelivery(s);
+                                                                                    }}
+                                                                                    style={{ padding: '2px 6px', fontSize: 12, cursor: 'pointer' }}
+                                                                                >
+                                                                                    {isExp ? '−' : '+'}
+                                                                                </button>
+                                                                                <input type="radio" name="delivery" checked={selectedDelivery===d.id} onChange={() => {
+                                                                                    setSelectedDelivery(d.id);
+                                                                                    if (d.tipoDireccion === 'AMBAS') setSelectedBilling(null);
+                                                                                }} disabled={selectedBilling !== null && direcciones.find(b=>b.id===selectedBilling)?.tipoDireccion === 'AMBAS'} />
+                                                                                <label style={{ flex: 1, cursor: 'pointer', marginBottom: 0 }}>
+                                                                                    {d.nombreDestinatario} — {d.direccionCalle} ({d.tipoDireccion})
+                                                                                </label>
+                                                                                <button onClick={() => handleStartEditDireccion(d)} style={{ padding: '2px 6px', fontSize: 12 }}>Editar</button>
+                                                                                <button onClick={() => handleDeleteDireccion(d.id)} style={{ padding: '2px 6px', fontSize: 12, backgroundColor: '#ee1818', color: 'white' }}>Eliminar</button>
+                                                                            </div>
+                                                                            {isExp && (
+                                                                                <div style={{ marginTop: 6, paddingLeft: 28, fontSize: 12, lineHeight: 1.6 }}>
+                                                                                    <div><strong>Calle:</strong> {d.direccionCalle}</div>
+                                                                                    <div><strong>CP:</strong> {d.codigoPostal}</div>
+                                                                                    <div><strong>Ciudad:</strong> {d.ciudad}</div>
+                                                                                    <div><strong>Provincia:</strong> {d.provincia}</div>
+                                                                                    <div><strong>País:</strong> {d.pais}</div>
+                                                                                    <div><strong>Teléfono:</strong> {d.telefono}</div>
+                                                                                    <div><strong>Documento:</strong> {d.documentoId}</div>
+                                                                                </div>
+                                                                            )}
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <label style={{ fontSize: 14, fontWeight: 600 }}>Dirección de facturación</label>
+                                            {loadingDirs ? <div>Cargando direcciones...</div> : (
+                                                <div>
+                                                    {billingDirs.length === 0 ? (
+                                                        <div style={{ marginTop: 8, fontSize: 13, color: '#486bf1' }}>No tienes ninguna dirección de facturación. Crea una dirección de tipo FACTURACION o AMBAS.</div>
+                                                    ) : (
+                                                        billingDirs.map(d => {
+                                                            const isExp = expandedBilling.has(d.id);
+                                                            const isEditing = editingDirId === d.id;
+                                                            return (
+                                                                <div key={`bill-${d.id}`} style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px solid #eee' }}>
+                                                                    {isEditing ? (
+                                                                        <div style={{ border: '1px solid #ddd', padding: 8, marginBottom: 8 }}>
+                                                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                                                                <input placeholder="Nombre destinatario" value={editDirData.nombreDestinatario} onChange={e=>setEditDirData({...editDirData, nombreDestinatario: e.target.value})} />
+                                                                                <input placeholder="Teléfono" value={editDirData.telefono} onChange={e=>setEditDirData({...editDirData, telefono: e.target.value})} />
+                                                                                <input placeholder="Calle" value={editDirData.direccionCalle} onChange={e=>setEditDirData({...editDirData, direccionCalle: e.target.value})} />
+                                                                                <input placeholder="Documento ID" value={editDirData.documentoId} onChange={e=>setEditDirData({...editDirData, documentoId: e.target.value})} />
+                                                                                <input placeholder="Código postal" value={editDirData.codigoPostal} onChange={e=>setEditDirData({...editDirData, codigoPostal: e.target.value})} />
+                                                                                <input placeholder="Ciudad" value={editDirData.ciudad} onChange={e=>setEditDirData({...editDirData, ciudad: e.target.value})} />
+                                                                                <input placeholder="Provincia" value={editDirData.provincia} onChange={e=>setEditDirData({...editDirData, provincia: e.target.value})} />
+                                                                                <input placeholder="País" value={editDirData.pais} onChange={e=>setEditDirData({...editDirData, pais: e.target.value})} />
+                                                                                <div style={{ gridColumn: '1 / -1' }}>
+                                                                                    <label>Tipo:&nbsp;</label>
+                                                                                    <select value={editDirData.tipoDireccion} onChange={e=>setEditDirData({...editDirData, tipoDireccion: e.target.value as any})}>
+                                                                                        <option value="PEDIDO">PEDIDO</option>
+                                                                                        <option value="FACTURACION">FACTURACION</option>
+                                                                                        <option value="AMBAS">AMBAS</option>
+                                                                                    </select>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                                                                                <button onClick={handleSaveEditDireccion} disabled={editingDirLoading}>{editingDirLoading ? 'Guardando...' : 'Guardar'}</button>
+                                                                                <button onClick={() => setEditingDirId(null)} disabled={editingDirLoading}>Cancelar</button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <>
+                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        const s = new Set(expandedBilling);
+                                                                                        if (s.has(d.id)) s.delete(d.id);
+                                                                                        else s.add(d.id);
+                                                                                        setExpandedBilling(s);
+                                                                                    }}
+                                                                                    style={{ padding: '2px 6px', fontSize: 12, cursor: 'pointer' }}
+                                                                                >
+                                                                                    {isExp ? '−' : '+'}
+                                                                                </button>
+                                                                                <input type="radio" name="billing" checked={selectedBilling===d.id} onChange={() => {
+                                                                                    setSelectedBilling(d.id);
+                                                                                    if (d.tipoDireccion === 'AMBAS') setSelectedDelivery(null);
+                                                                                }} disabled={selectedDelivery !== null && direcciones.find(s=>s.id===selectedDelivery)?.tipoDireccion === 'AMBAS'} />
+                                                                                <label style={{ flex: 1, cursor: 'pointer', marginBottom: 0 }}>
+                                                                                    {d.nombreDestinatario} — {d.direccionCalle} ({d.tipoDireccion})
+                                                                                </label>
+                                                                                <button onClick={() => handleStartEditDireccion(d)} style={{ padding: '2px 6px', fontSize: 12 }}>Editar</button>
+                                                                                <button onClick={() => handleDeleteDireccion(d.id)} style={{ padding: '2px 6px', fontSize: 12, backgroundColor: '#ec101f', color: 'white' }}>Eliminar</button>
+                                                                            </div>
+                                                                            {isExp && (
+                                                                                <div style={{ marginTop: 6, paddingLeft: 28, fontSize: 12, lineHeight: 1.6 }}>
+                                                                                    <div><strong>Calle:</strong> {d.direccionCalle}</div>
+                                                                                    <div><strong>CP:</strong> {d.codigoPostal}</div>
+                                                                                    <div><strong>Ciudad:</strong> {d.ciudad}</div>
+                                                                                    <div><strong>Provincia:</strong> {d.provincia}</div>
+                                                                                    <div><strong>País:</strong> {d.pais}</div>
+                                                                                    <div><strong>Teléfono:</strong> {d.telefono}</div>
+                                                                                    <div><strong>Documento:</strong> {d.documentoId}</div>
+                                                                                </div>
+                                                                            )}
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </>

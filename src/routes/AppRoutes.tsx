@@ -18,6 +18,7 @@ import CarritoPage from "../pages/CarritoPage";
 import CompletePage from "../modules/ventas/CompletePage";
 import CheckoutSuccess from "../pages/CheckoutSuccess";
 import CheckoutCancelled from "../pages/CheckoutCancelled";
+import DireccionesPage from "../modules/direcciones/DireccionesPage";
 
 const AuthenticatedRoute = () => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -101,6 +102,7 @@ const AppRoutes = () => {
 
                     <Route element={<RoleRoute allowedRoles={["CLIENTE"]} />}>
                         <Route path="/cliente/area" element={<p>Area de cliente</p>} />
+                        <Route path="/mis-direcciones" element={<DireccionesPage />} />
                     </Route>
 
                     <Route element={<RoleRoute allowedRoles={["CLIENTE", "ADMIN"]} />}>
