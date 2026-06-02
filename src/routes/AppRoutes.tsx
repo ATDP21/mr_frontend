@@ -15,9 +15,9 @@ import NuestraHistoriaPage from "../pages/NuestraHistoriaPage";
 import ContactoPage from "../pages/ContactoPage";
 import HomePage from "../pages/HomePage";
 import CarritoPage from "../pages/CarritoPage";
-import CartPage from "../modules/ventas/CartPage";
 import CompletePage from "../modules/ventas/CompletePage";
-import CheckoutResultPage from "../modules/ventas/CheckoutResultPage";
+import CheckoutSuccess from "../pages/CheckoutSuccess";
+import CheckoutCancelled from "../pages/CheckoutCancelled";
 
 const AuthenticatedRoute = () => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -84,12 +84,14 @@ const AppRoutes = () => {
 
                 <Route path="/guitarra/stock" element={<StockGuitarrasPage />} />
                 <Route path="/guitarra/:id" element={<DetalleGuitarraPage />} />
+                <Route path="/checkout/success" element={<CheckoutSuccess />} />
+                <Route path="/checkout/cancelled" element={<CheckoutCancelled />} />
                 <Route path="/nuestra-historia" element={<NuestraHistoriaPage />} />
                 <Route path="/contacto" element={<ContactoPage />} />
 
-                <Route path="/cart" element={<CartPage />} />
+                {/* Alias legacy para enlaces antiguos */}
+                <Route path="/cart" element={<Navigate to="/carrito" replace />} />
                 <Route path="/complete" element={<CompletePage />} />
-                <Route path="/checkout/result" element={<CheckoutResultPage />} />
 
                 <Route element={<AuthenticatedRoute />}>
                     <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>

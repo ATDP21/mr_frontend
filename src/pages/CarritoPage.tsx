@@ -2,11 +2,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../contexts/cart/CartContext";
+import { getGuitarraByNumserie } from "../modules/guitarras/services/guitarra.service";
+import type { Guitarra } from "../modules/guitarras/types/guitarra";
 import { apiFetch } from "../utils/api";
 import { config } from "../config/enviroment";
 import { useAuth } from "../contexts/auth/AuthContext";
-import { getGuitarraByNumserie } from "../modules/guitarras/services/guitarra.service";
-import type { Guitarra } from "../modules/guitarras/types/guitarra";
 
 type CartLine = {
     idProducto: number;
@@ -78,20 +78,20 @@ const CarritoPage: React.FC = () => {
 
     const { user } = useAuth();
     const [creating, setCreating] = useState(false);
+    const [direccionEntregaId, setDireccionEntregaId] = useState<number>(1);
+    const [direccionFacturacionId, setDireccionFacturacionId] = useState<number>(2);
 
     const handleProceedToCheckout = async () => {
         if (items.length === 0) return;
-        setCreating(true);
         try {
+            setCreating(true);
+
             const payload = {
-                cartItems: items.map(ci => ({
-                    guitarraid: ci.productId,
-                    cantidad: ci.quantity
-                })),
-                direccionEntregaId: 0,
-                direccionFacturacionId: 0,
-                email: user?.email || "cliente@example.com",
-                nombreCliente: user?.nombreCompleto || user?.nomusuario || "Cliente Ejemplo"
+                cartItems: items.map(it => ({ guitarraid: it.productId, cantidad: it.quantity })),
+                direccionEntregaId: direccionEntregaId,
+                direccionFacturacionId: direccionFacturacionId,
+                email: user?.email ?? '',
+                nombreCliente: user?.nombreCompleto ?? user?.nomusuario ?? 'Cliente'
             };
 
             console.log('Checkout payload (obj):', payload);
@@ -109,24 +109,19 @@ const CarritoPage: React.FC = () => {
 
             if (!res.ok) {
                 const body = await res.json().catch(() => null);
-                console.error('create-session failed', res.status, body);
-                alert(body?.message || 'No se pudo iniciar la sesión de pago');
-                return;
+                throw new Error(body?.message || `Create session failed: ${res.status}`);
             }
 
-            const data = await res.json();
-            const { sessionUrl } = data || {};
-            if (sessionUrl) {
-                // opcional: limpiar carrito local antes de redirigir
-                // clear();
-                window.location.assign(sessionUrl);
-            } else {
-                console.error('Respuesta inesperada create-session', data);
-                alert('Respuesta inesperada del servidor al crear la sesión de pago');
+            const body = await res.json().catch(() => null);
+            if (body && body.sessionUrl) {
+                // redirección top-level a Stripe
+                window.location.assign(body.sessionUrl);
+                return;
             }
-        } catch (err) {
-            console.error('Error al crear sesión de checkout', err);
-            alert('Error de red o servidor al crear la sesión de pago');
+            throw new Error('sessionUrl not returned by backend');
+        } catch (e: any) {
+            console.error('Error creating session', e);
+            alert(e?.message || 'Error al crear la sesión');
         } finally {
             setCreating(false);
         }
@@ -193,34 +188,37 @@ const CarritoPage: React.FC = () => {
                         </tbody>
                     </table>
 
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: 'center', marginTop: 16 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, alignItems: 'center' }}>
                         <div>
-                            <button onClick={clear} style={{ marginRight: 8 }}>Vaciar carrito</button>
+                            <button onClick={clear}>Vaciar carrito</button>
                         </div>
-
-                        <div style={{ textAlign: "right" }}>
-                            <div>
+                        <div style={{ textAlign: "right", minWidth: 260 }}>
+                            <div style={{ marginBottom: 8 }}>
                                 <strong>Total:</strong> {subtotal} €
                             </div>
-                            <div style={{ fontSize: 12, opacity: 0.8 }}>
+                            <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 8 }}>
                                 El total se recalculará en el checkout con precios/stock actuales.
                             </div>
-                            <div style={{ marginTop: 8 }}>
-                                <button
-                                    onClick={handleProceedToCheckout}
-                                    disabled={creating || items.length === 0}
-                                    style={{
-                                        backgroundColor: creating || items.length === 0 ? '#999' : '#0b74de',
-                                        color: 'white',
-                                        padding: '10px 16px',
-                                        border: 'none',
-                                        borderRadius: 6,
-                                        cursor: creating || items.length === 0 ? 'not-allowed' : 'pointer'
-                                    }}
-                                >
-                                    {creating ? 'Creando sesión...' : 'Proceder al pago'}
-                                </button>
+                            <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                                <label style={{ fontSize: 12 }}>Dir. entrega:</label>
+                                <input type="number" min={1} value={direccionEntregaId} onChange={e => setDireccionEntregaId(Number(e.target.value || 1))} style={{ width: 80 }} />
+                                <label style={{ fontSize: 12 }}>Dir. facturación:</label>
+                                <input type="number" min={1} value={direccionFacturacionId} onChange={e => setDireccionFacturacionId(Number(e.target.value || 2))} style={{ width: 80 }} />
                             </div>
+                            <button
+                                onClick={handleProceedToCheckout}
+                                disabled={creating || items.length === 0}
+                                style={{
+                                    backgroundColor: creating ? '#999' : '#007bff',
+                                    color: 'white',
+                                    padding: '8px 12px',
+                                    border: 'none',
+                                    borderRadius: 4,
+                                    cursor: creating ? 'not-allowed' : 'pointer'
+                                }}
+                            >
+                                {creating ? 'Creando sesión...' : 'Proceder al pago'}
+                            </button>
                         </div>
                     </div>
                 </>
