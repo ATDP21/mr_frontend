@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../contexts/cart/CartContext";
-import { getGuitarraByNumserie } from "../modules/guitarras/services/guitarra.service";
+import { getGuitarraById } from "../modules/guitarras/services/guitarra.service";
 import type { Guitarra } from "../modules/guitarras/types/guitarra";
 import { apiFetch } from "../utils/api";
 import { config } from "../config/enviroment";
@@ -40,7 +40,7 @@ const CarritoPage: React.FC = () => {
                     try {
                         // Si tu servicio aún busca por "numserie", pero ahora usas id de producto,
                         // se pasa como string hasta que migres el endpoint/servicio a "getGuitarraById".
-                        const guitarra = await getGuitarraByNumserie(String(it.productId));
+                        const guitarra = await getGuitarraById(String(it.productId));
 
                         return {
                             idProducto: it.productId,

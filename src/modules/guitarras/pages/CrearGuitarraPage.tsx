@@ -9,6 +9,7 @@ const CrearGuitarraPage: React.FC = () => {
     const navigate = useNavigate();
 
     const [form, setForm] = useState<CrearGuitarraRequest>({
+        nombre: "",
         numserie: "",
         estado: "",
         precio: 0,
@@ -42,6 +43,7 @@ const CrearGuitarraPage: React.FC = () => {
             setMensaje("Guitarra creada correctamente");
 
             setForm({
+                nombre: "",
                 numserie: "",
                 estado: "",
                 precio: 0,
@@ -85,6 +87,15 @@ const CrearGuitarraPage: React.FC = () => {
                     name="numserie"
                     placeholder="Nº serie"
                     value={form.numserie}
+                    onChange={handleChange}
+                    required
+                />
+                <br />
+                <input
+                    type="text"
+                    name="nombre"
+                    placeholder="Nombre"
+                    value={form.nombre}
                     onChange={handleChange}
                     required
                 />

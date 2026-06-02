@@ -19,6 +19,9 @@ import CompletePage from "../modules/ventas/CompletePage";
 import CheckoutSuccess from "../pages/CheckoutSuccess";
 import CheckoutCancelled from "../pages/CheckoutCancelled";
 import DireccionesPage from "../modules/direcciones/DireccionesPage";
+import MiCuentaPage from "../pages/MiCuentaPage";
+import MisPedidosPage from "../pages/MisPedidosPage";
+import PedidoDetallePage from "../pages/PedidoDetallePage";
 
 const AuthenticatedRoute = () => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -106,7 +109,10 @@ const AppRoutes = () => {
                     </Route>
 
                     <Route element={<RoleRoute allowedRoles={["CLIENTE", "ADMIN"]} />}>
-                        <Route path="/mi-cuenta" element={<p>Mi cuenta</p>} />
+                        <Route path="/mi-cuenta" element={<MiCuentaPage />} />
+                        <Route path="/mi-cuenta/mis-pedidos" element={<MisPedidosPage />} />
+                        <Route path="/mi-cuenta/mis-pedidos/:id" element={<PedidoDetallePage />} />
+                        <Route path="/mi-cuenta/mis-direcciones" element={<DireccionesPage />} />
                     </Route>
                 </Route>
             </Route>

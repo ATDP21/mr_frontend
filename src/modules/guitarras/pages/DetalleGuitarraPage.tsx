@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useCart } from "../../../contexts/cart/CartContext";
-import { getGuitarraByNumserie } from "../services/guitarra.service";
+import { getGuitarraById } from "../services/guitarra.service";
 import { Guitarra } from "../types/guitarra";
 
 const DetalleGuitarraPage: React.FC = () => {
@@ -26,7 +26,7 @@ const DetalleGuitarraPage: React.FC = () => {
                     return;
                 }
 
-                const found = await getGuitarraByNumserie(numserie);
+                const found = await getGuitarraById(numserie);
                 if (!found) {
                     setGuitarra(null);
                     setError("Guitarra no encontrada");
@@ -83,6 +83,9 @@ const DetalleGuitarraPage: React.FC = () => {
                 </p>
                 <p>
                     Nº Serie: <strong>{guitarra.numserie}</strong>
+                </p>
+                <p>
+                    Nombre: <strong>{guitarra.nombre}</strong>
                 </p>
                 <p>
                     Estado: <strong>{guitarra.estado}</strong>

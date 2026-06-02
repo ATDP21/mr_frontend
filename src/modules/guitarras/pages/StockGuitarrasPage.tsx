@@ -40,6 +40,7 @@ const StockGuitarrasPage: React.FC = () => {
                         <th>Detalle</th>
                         <th>ID</th>
                         <th>Nº Serie</th>
+                        <th>Nombre</th>
                         <th>Estado</th>
                         <th>Precio</th>
                         <th>Madera</th>
@@ -53,10 +54,11 @@ const StockGuitarrasPage: React.FC = () => {
                     {guitarras.map((g) => (
                         <tr key={g.id}>
                             <td>
-                                <Link to={`/guitarra/${encodeURIComponent(g.numserie)}`}>Ver</Link>
+                                <Link to={`/guitarra/${encodeURIComponent(g.id)}`}>Ver</Link>
                             </td>
                             <td>{g.id}</td>
                             <td>{g.numserie}</td>
+                            <td>{g.nombre}</td>
                             <td>{g.estado}</td>
                             <td>{g.precio} €</td>
                             <td>{g.tipomadera}</td>

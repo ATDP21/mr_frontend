@@ -18,8 +18,8 @@ export const getStockGuitarras = async (): Promise<Guitarra[]> => {
     });
 };
 
-export const getGuitarraByNumserie = async (numserie: string): Promise<Guitarra | null> => {
-    const value = encodeURIComponent(numserie);
+export const getGuitarraById = async (id: string): Promise<Guitarra | null> => {
+    const value = encodeURIComponent(id);
     const data = await apiFetchJson<Guitarra | null>(`${config.url.API_BASE_URL}/guitarra/ver/${value}`, {
         method: "GET",
         headers: {
