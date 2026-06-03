@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useCart } from "../../../contexts/cart/CartContext";
+import GuitarraImagenesUploader from "../components/GuitarraImagenesUploader";
 import { getGuitarraById } from "../services/guitarra.service";
 import { Guitarra } from "../types/guitarra";
 
@@ -111,8 +112,10 @@ const DetalleGuitarraPage: React.FC = () => {
                     </strong>
                 </p>
             </div>
+            <GuitarraImagenesUploader guitarraId={guitarra.id} />
         </div>
     );
 };
 
 export default DetalleGuitarraPage;
+
