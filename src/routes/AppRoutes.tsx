@@ -22,6 +22,8 @@ import DireccionesPage from "../modules/direcciones/DireccionesPage";
 import MiCuentaPage from "../pages/MiCuentaPage";
 import MisPedidosPage from "../pages/MisPedidosPage";
 import PedidoDetallePage from "../pages/PedidoDetallePage";
+import AdminPanelPage from "../pages/AdminPanelPage";
+import AdminPedidosPage from "../pages/AdminPedidosPage";
 
 const AuthenticatedRoute = () => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -100,7 +102,9 @@ const AppRoutes = () => {
                 <Route element={<AuthenticatedRoute />}>
                     <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
                         <Route path="/guitarra/crear" element={<CrearGuitarraPage />} />
-                        <Route path="/admin/panel" element={<p>Panel de administracion</p>} />
+                        <Route path="/admin/panel" element={<AdminPanelPage />} />
+                        <Route path="/admin/pedidos" element={<AdminPedidosPage />} />
+                        <Route path="/admin/pedidos/:id" element={<PedidoDetallePage />} />
                     </Route>
 
                     <Route element={<RoleRoute allowedRoles={["CLIENTE"]} />}>

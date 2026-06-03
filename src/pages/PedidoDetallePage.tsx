@@ -84,13 +84,16 @@ export default function PedidoDetallePage() {
                             {pedido.stockPedidos.map((s, idx) => {
                                  const g = (s as any).guitarraid;
                                  const cantidad = (s as any).cantidad ?? 0;
+                                 const nombre = (s as any).nombre ?? (g?.nombre ?? 'Desconocido');
+                                 const numSerie = (s as any).numserie ?? (g?.numserie ?? 'Desconocido');
                                  const precioUnidadRaw = (s as any).precioUnidad ?? (g?.precio ?? 0);
                                  const precioUnidad = typeof precioUnidadRaw === 'string' ? Number(precioUnidadRaw) : precioUnidadRaw;
                                  const subtotal = (Number(cantidad) || 0) * (Number(precioUnidad) || 0);
                                  return (
                                      <div key={idx} style={{ padding: 8, border: '1px solid #f3f4f6', borderRadius: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                          <div>
-                                             <div><strong>Guitarra:</strong> {g ? (g.numserie ?? `#${g.id}`) : 'Desconocida'}</div>
+                                             <div><strong>Guitarra:</strong> {g ? nombre : 'Desconocida'}</div>
+                                             <div><strong>Número de serie:</strong> {g ? numSerie : 'Desconocido'}</div>
                                             <div><strong>Cantidad:</strong> {cantidad}</div>
                                             <div><strong>Precio unidad:</strong> {isNaN(Number(precioUnidad)) ? String(precioUnidad) : `${Number(precioUnidad).toFixed(2)} €`}</div>
                                             <div><strong>Subtotal:</strong> {`${subtotal.toFixed(2)} €`}</div>

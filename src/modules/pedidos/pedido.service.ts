@@ -35,6 +35,10 @@ export const misPedidos = async (): Promise<PedidoDTO[]> => {
     return apiFetchJson<PedidoDTO[]>(`${BASE}/pedido/mios`, { method: 'GET' });
 };
 
+export const getTodosPedidos = async (): Promise<PedidoDTO[]> => {
+    return apiFetchJson<PedidoDTO[]>(`${BASE}/pedido/todos`, { method: 'GET' });
+}
+
 export const verPedido = async (id: number): Promise<PedidoDTO> => {
     return apiFetchJson<PedidoDTO>(`${BASE}/pedido/${id}`, { method: 'GET' });
 };
