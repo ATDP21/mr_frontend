@@ -3,11 +3,6 @@ import { Guitarra } from "../types/guitarra";
 import { CrearGuitarraRequest } from "../types/crearGuitarra";
 import { apiFetch, apiFetchJson } from "../../../utils/api";
 
-const getCookie = (name: string): string | null => {
-    const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
-    return match ? decodeURIComponent(match[1]) : null;
-};
-
 export const getStockGuitarras = async (): Promise<Guitarra[]> => {
     return apiFetchJson<Guitarra[]>(`${config.url.API_BASE_URL}/guitarra/verStock`, {
         method: "GET",
@@ -33,16 +28,12 @@ export const getGuitarraById = async (id: string): Promise<Guitarra | null> => {
 };
 
 export const crearGuitarra = async (guitarra: CrearGuitarraRequest): Promise<void> => {
-    const xsrfToken = getCookie("XSRF-TOKEN");
-
     const response = await apiFetch(`${config.url.API_BASE_URL}/guitarra/crear`, {
         method: "POST",
-        credentials: "include",
         headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
             "X-Requested-With": "XMLHttpRequest",
-            ...(xsrfToken ? { "X-XSRF-TOKEN": xsrfToken } : {}),
         },
         body: JSON.stringify(guitarra),
     });

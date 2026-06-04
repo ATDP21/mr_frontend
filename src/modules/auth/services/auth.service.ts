@@ -8,17 +8,16 @@ import {
     UsuarioSecureDTO,
     UserRole,
 } from "../types/auth";
-import { getXsrfTokenFromCookie } from "../../../utils/api";
+import { apiFetch, clearXsrfToken, rememberXsrfTokenFromCookie } from "../../../utils/api";
 
 export async function login(request: LoginRequest): Promise<AuthResponse> {
-    const response = await fetch(`${config.url.API_BASE_URL}/auth/login`, {
+    const response = await apiFetch(`${config.url.API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "Accept": "application/json",
             "X-Requested-With": "XMLHttpRequest",
         },
-        credentials: "include",
         body: JSON.stringify(request),
     });
 
@@ -28,18 +27,18 @@ export async function login(request: LoginRequest): Promise<AuthResponse> {
         throw new Error(data.message || "Login incorrecto");
     }
 
+    rememberXsrfTokenFromCookie();
     return data;
 }
 
 export async function register(request: RegisterRequest): Promise<RegisterResponse> {
-    const response = await fetch(`${config.url.API_BASE_URL}/auth/registro`, {
+    const response = await apiFetch(`${config.url.API_BASE_URL}/auth/registro`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "Accept": "application/json",
             "X-Requested-With": "XMLHttpRequest",
         },
-        credentials: "include",
         body: JSON.stringify(request),
     });
 
@@ -55,6 +54,7 @@ export async function register(request: RegisterRequest): Promise<RegisterRespon
         throw new Error(message);
     }
 
+    rememberXsrfTokenFromCookie();
     // Si el backend devuelve el usuario, podrías mapearlo; por ahora solo devolvemos status.
     return { message: "Registrado correctamente" };
 }
@@ -102,9 +102,8 @@ function mapUsuarioSecureDTO(data: unknown): LoggedUser {
 }
 
 export async function getLoggedUser(): Promise<LoggedUser | null> {
-    const response = await fetch(`${config.url.API_BASE_URL}/usuario/loggeado`, {
+    const response = await apiFetch(`${config.url.API_BASE_URL}/usuario/loggeado`, {
         method: "GET",
-        credentials: "include",
         headers: {
             "Accept": "application/json",
             "X-Requested-With": "XMLHttpRequest",
@@ -118,6 +117,7 @@ export async function getLoggedUser(): Promise<LoggedUser | null> {
     }
 
     if (response.status === 401 || response.status === 403) {
+        clearXsrfToken();
         return null;
     }
 
@@ -130,20 +130,17 @@ export async function getLoggedUser(): Promise<LoggedUser | null> {
 }
 
 export async function logout(): Promise<void> {
-    const xsrf = getXsrfTokenFromCookie();
-    const headers: Record<string, string> = {
-        "Accept": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-    };
-    if (xsrf) headers["X-XSRF-TOKEN"] = xsrf;
-
-    const response = await fetch(`${config.url.API_BASE_URL}/auth/logout`, {
+    const response = await apiFetch(`${config.url.API_BASE_URL}/auth/logout`, {
         method: "POST",
-        credentials: "include",
-        headers,
+        headers: {
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+        },
     });
 
     if (!response.ok) {
         throw new Error("No se pudo cerrar sesión");
     }
+
+    clearXsrfToken();
 }

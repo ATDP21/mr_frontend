@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { apiFetch, getXsrfTokenFromCookie } from '../utils/api';
+import { apiFetch } from '../utils/api';
 import { config } from '../config/enviroment';
-import {getLoggedUser} from "../modules/auth/services/auth.service";
 
 type Pedido = {
   id: number;
@@ -53,27 +52,11 @@ const CheckoutSuccess: React.FC = () => {
     }
     return res.text().catch(() => null);
   };
-  const getCookie = (name: string): string | null => {
-    const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
-    return match ? decodeURIComponent(match[1]) : null;
-  };
   const confirmarPago = async (sessionId: string, storageKey: string) => {
     try {
       setLoading(true);
       setError(null);
-
-      // 1) GET previo para que tu CsrfFilter emita XSRF-TOKEN si no existe
-      // (safe method -> genera cookie en backend)
-      await getLoggedUser()
-
-      // 2) Leer token CSRF de cookie
-      const xsrf = getCookie("XSRF-TOKEN");
-
-      if (!xsrf) {
-        throw new Error('No se pudo obtener XSRF-TOKEN. Recarga la página e inténtalo de nuevo.');
-      }
-
-      // 3) Confirmar pago en backend — enviar sessionId en el body JSON
+      // Confirmar pago en backend — enviar sessionId en el body JSON
       const res = await apiFetch(
           `${config.url.API_BASE_URL}/api/checkout/confirm-payment`,
           {
@@ -82,7 +65,6 @@ const CheckoutSuccess: React.FC = () => {
               "Content-Type": 'application/json',
               Accept: 'application/json',
               'X-Requested-With': 'XMLHttpRequest',
-              ...(xsrf ? { "X-XSRF-TOKEN": xsrf } : {}),
             },
             body: JSON.stringify({ sessionId })
           }
@@ -101,7 +83,7 @@ const CheckoutSuccess: React.FC = () => {
       setPedido(body as Pedido);
       sessionStorage.setItem(storageKey, 'done');
 
-      setTimeout(() => navigate('/mis-pedidos'), 3000);
+      setTimeout(() => navigate('/mi-cuenta/mis-pedidos'), 3000);
     } catch (err: any) {
       setError(err?.message || 'Error al confirmar el pago');
     } finally {
@@ -153,9 +135,8 @@ const CheckoutSuccess: React.FC = () => {
             </div>
 
             <p className="text-muted mt-3">Serás redirigido a tus pedidos en 3 segundos...</p>
-            <p className="text-muted mt-3">Serás redirigido a tus pedidos en 3 segundos...</p>
 
-            <button onClick={() => navigate('/mis-pedidos')} className="btn btn-primary mt-3">
+            <button onClick={() => navigate('/mi-cuenta/mis-pedidos')} className="btn btn-primary mt-3">
               Ver mis pedidos
             </button>
           </div>
