@@ -108,7 +108,6 @@ const AppRoutes = () => {
                     </Route>
 
                     <Route element={<RoleRoute allowedRoles={["CLIENTE"]} />}>
-                        <Route path="/cliente/area" element={<p>Area de cliente</p>} />
                         <Route path="/mis-direcciones" element={<DireccionesPage />} />
                     </Route>
 
