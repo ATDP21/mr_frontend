@@ -379,7 +379,7 @@ const CarritoPage: React.FC = () => {
                                 <hr className="my-2"/>
                                 <div className="flex justify-between mb-2">
                                     <span className="font-semibold">Total</span>
-                                    <span className="font-semibold">{subtotal}</span>
+                                    <span className="font-semibold">{subtotal} €</span>
                                 </div>
                                 <button onClick={handleProceedToCheckout}
                                         disabled={creating || items.length === 0}

@@ -19,7 +19,7 @@ export default function LoginPage() {
 
         try {
             await login({ email, password });
-            navigate("/guitarra/stock", { replace: true });
+            navigate("/", { replace: true });
         } catch {
             setError("Credenciales invalidas");
         }

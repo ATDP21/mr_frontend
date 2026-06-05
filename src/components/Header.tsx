@@ -67,7 +67,7 @@ const Header: React.FC = () => {
                                         aria-haspopup="true"
                                         aria-expanded={isUserMenuOpen}
                                         onClick={() => setIsUserMenuOpen((open) => !open)}
-                                        className="inline-flex items-center gap-2 rounded-full bg-yellow-500 px-6 py-2 text-lg text-black transition-all hover:bg-yellow-400 focus:outline-none"
+                                        className="inline-flex items-center gap-2 rounded-full bg-[#3b2927] text-[#EFECD9] px-6 py-2 text-lg  transition-all hover:bg-[#272A2B]  focus:outline-none"
                                     >
                                         <strong>{user?.nomusuario ?? "-"} </strong>
                                         <p>{user?.email ?? "-"}</p>
@@ -110,7 +110,7 @@ const Header: React.FC = () => {
                                 </div>
                             ) : (
                                 <button onClick={() => navigate("/login")}
-                                        className="rounded-full bg-yellow-500 px-6 py-2 text-lg text-black transition-all hover:bg-yellow-400">
+                                        className="rounded-full bg-yellow-500/0 border-2 font-bold border-black px-6 py-2 text-lg text-black transition-all hover:bg-[#3b2927] hover:text-[#EFECD9]">
                                     Iniciar sesión
                                 </button>
                             )}
