@@ -7,6 +7,8 @@ import {
     uploadGuitarraImagenes,
 } from "../services/guitarraImagen.service";
 import { GuitarraImagen } from "../types/guitarraImagen";
+import {useAuth} from "../../../contexts/auth/AuthContext";
+import {Link} from "react-router-dom";
 
 type Props = {
     guitarraId: number;
@@ -28,6 +30,9 @@ const badgeStyle: React.CSSProperties = {
 };
 
 const GuitarraImagenesUploader: React.FC<Props> = ({ guitarraId }) => {
+    const { user } = useAuth();
+    const isAdmin = user?.rol === "ADMIN";
+
     const [imagenes, setImagenes] = useState<GuitarraImagen[]>([]);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [previews, setPreviews] = useState<string[]>([]);
@@ -132,8 +137,9 @@ const GuitarraImagenesUploader: React.FC<Props> = ({ guitarraId }) => {
     };
 
     return (
+
         <section style={{ marginTop: 24, display: "grid", gap: 16 }}>
-            <div style={cardStyle}>
+            {isAdmin ? <div style={cardStyle}>
                 <h2 style={{ marginTop: 0 }}>Imágenes de la guitarra</h2>
                 <p style={{ marginTop: 0, color: "#4b5563" }}>
                     Sube una o varias imágenes. La primera imagen subida se usará como principal si todavía no hay una.
@@ -163,8 +169,8 @@ const GuitarraImagenesUploader: React.FC<Props> = ({ guitarraId }) => {
 
                 {error ? <p style={{ color: "#b91c1c" }}>{error}</p> : null}
                 {success ? <p style={{ color: "#15803d" }}>{success}</p> : null}
-            </div>
-
+            </div> : null}
+            {isAdmin ?
             <div style={cardStyle}>
                 <h3 style={{ marginTop: 0 }}>Galería</h3>
 
@@ -219,7 +225,7 @@ const GuitarraImagenesUploader: React.FC<Props> = ({ guitarraId }) => {
                         })}
                     </div>
                 )}
-            </div>
+            </div> : null}
         </section>
     );
 };

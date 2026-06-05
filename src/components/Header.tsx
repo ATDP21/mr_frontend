@@ -12,19 +12,15 @@ const Header: React.FC = () => {
     const isAdmin = user?.rol === "ADMIN";
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const handleLogout = async () => {
         await logout();
         navigate("/", {replace: true});
     };
 
     return (
-        <header className={"bg-blue-50 text-black"}
-                style={{
-                    borderBottom: "1px solid #e5e7eb",
-                    padding: "12px 16px",
-                    marginBottom: 16,
-                }}
+        <header className={"bg-[#EFECD9] text-black shadow-md mb-0"}
+
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
 
@@ -46,13 +42,13 @@ const Header: React.FC = () => {
                     </div>
                     <nav className="hidden md:flex space-x-10 text-lg">
 
-                        <Link className={"text-center hover:text-gray-300 transition-all"} to="/nuestra-historia">Nuestra
+                        <Link className={"text-center font-bold hover:text-red-500 transition-all"} to="/nuestra-historia">Nuestra
                             Historia</Link>
-                        <Link className={"text-center hover:text-gray-300 transition-all"}
+                        <Link className={"text-center font-bold hover:text-red-500 transition-all"}
                               to="/guitarra/stock">Guitarras</Link>
-                        <Link className={"text-center hover:text-gray-300 transition-all"}
+                        <Link className={"text-center font-bold hover:text-red-500 transition-all"}
                               to="/carrito">Carrito{totalItems > 0 ? ` (${totalItems})` : ""}</Link>
-                        <Link className={"text-center hover:text-gray-300 transition-all"}
+                        <Link className={"text-center font-bold hover:text-red-500 transition-all"}
                               to="/contacto">Contacto</Link>
                     </nav>
                     <div className={" md:block"}>
@@ -62,48 +58,61 @@ const Header: React.FC = () => {
                             {isLoading ? (
                                 <span>Cargando sesión…</span>
                             ) : isAuthenticated ? (
-                                <>
-                                    <div style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        alignItems: "flex-end",
-                                        lineHeight: 1.2
-                                    }}>
-                                <span>
-                                    <button id="dropdownHoverButton" data-dropdown-toggle="dropdownHover"
-                                            data-dropdown-trigger="hover"
-                                            className="inline-flex items-center justify-center text-black bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none"
-                                            type="button">
+                                <div
+                                    className="relative inline-block text-left"
 
-                                    <strong>{user?.nomusuario ?? "-"}</strong>
-                                        {user?.email ?
-                                            <span style={{marginLeft: 8, opacity: 0.8}}>{user.email}</span> : null}
-                                        </button>
+                                >
+                                    <button
+                                        type="button"
+                                        aria-haspopup="true"
+                                        aria-expanded={isUserMenuOpen}
+                                        onClick={() => setIsUserMenuOpen((open) => !open)}
+                                        className="inline-flex items-center gap-2 rounded-full bg-yellow-500 px-6 py-2 text-lg text-black transition-all hover:bg-yellow-400 focus:outline-none"
+                                    >
+                                        <strong>{user?.nomusuario ?? "-"} </strong>
+                                        <p>{user?.email ?? "-"}</p>
+                                        <svg className="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24">
+                                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
+                                                  strokeWidth={2} d="m19 9-7 7-7-7" />
+                                        </svg>
+                                    </button>
 
-                                            </span>
-
-                                    </div>
-                                    <div id="dropdownHover" className="z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-44">
-                                        <ul className="p-2 text-sm text-body font-medium" aria-labelledby="dropdownHoverButton">
+                                    {/* Menú desplegable */}
+                                    <div
+                                        className={`absolute right-0 z-10 mt-2 w-44 rounded-lg border border-gray-200 bg-white shadow-lg ${
+                                            isUserMenuOpen ? "" : "hidden"
+                                        }`}
+                                    >
+                                        <ul className="p-2 text-sm font-medium text-gray-700">
                                             <li>
-                                                <Link to="/mi-cuenta">Mi cuenta</Link>
+                                                <Link to="/mi-cuenta" className="block w-full rounded p-2 hover:bg-gray-100">
+                                                    Mi cuenta
+                                                </Link>
                                             </li>
-                                            <li>
-                                                {isAdmin ? <Link to="/admin/panel">Panel admin</Link> : null}
-                                            </li>
-                                            <li>
-                                                <button onClick={handleLogout}>Cerrar sesión</button>
-                                            </li>
+                                            {isAdmin && (
+                                                <li>
+                                                    <Link to="/admin/panel" className="block w-full rounded p-2 hover:bg-gray-100">
+                                                        Panel admin
+                                                    </Link>
+                                                </li>
+                                            )}
 
+                                            <li>
+                                                <button
+                                                    onClick={handleLogout}
+                                                    className="block w-full rounded p-2 text-left hover:bg-gray-100"
+                                                >
+                                                    Cerrar sesión
+                                                </button>
+                                            </li>
                                         </ul>
                                     </div>
-
-
-                                </>
+                                </div>
                             ) : (
                                 <button onClick={() => navigate("/login")}
-                                        className={"bg-yellow-500 hover:bg-yellow-400 text-black py-2 px-6 rounded-full text-lg transition-all mr-auto"}>Iniciar
-                                    sesión</button>
+                                        className="rounded-full bg-yellow-500 px-6 py-2 text-lg text-black transition-all hover:bg-yellow-400">
+                                    Iniciar sesión
+                                </button>
                             )}
                         </div>
                     </div>
@@ -115,7 +124,7 @@ const Header: React.FC = () => {
                             onClick={() => setIsMobileMenuOpen((open) => !open)}
                             className="text-white focus:outline-none"
                         >
-                            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            <svg className="h-6 w-6" fill="none" stroke="black" viewBox="0 0 24 24"
                                  xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M4 6h16M4 12h16M4 18h16"></path>
