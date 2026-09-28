@@ -4,6 +4,9 @@ Frontend de la aplicación web de Manuel Romero, orientada a la venta de guitarr
 
 Este proyecto está desarrollado con React + TypeScript y usa routing, contexto global, llamadas HTTP al backend e integración con Stripe para la compra.
 
+<img width="1895" height="862" alt="image" src="https://github.com/user-attachments/assets/03af803d-7c04-4e46-bbfc-f251f710aa9d" />
+
+
 ## 1. Visión general
 
 La aplicación permite:
